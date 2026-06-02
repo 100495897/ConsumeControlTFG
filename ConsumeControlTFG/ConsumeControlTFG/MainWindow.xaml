@@ -1,0 +1,282 @@
+﻿<Window x:Class="ConsumeControlTFG.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Monitor Energético TFG" Height="750" Width="1000"
+        WindowStartupLocation="CenterScreen" Background="White"
+        Closing="Window_Closing">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#F8F9FA" BorderBrush="#DEE2E6" BorderThickness="0,0,0,1" Padding="15,10">
+            <DockPanel LastChildFill="True">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Label Content="Ubicación:" VerticalAlignment="Center" FontWeight="Bold" Foreground="#495057"/>
+                    <ComboBox x:Name="cbPaises" Width="150" Margin="5" DisplayMemberPath="Nombre" 
+                              SelectionChanged="cbPaises_SelectionChanged" IsEditable="True" 
+                              IsReadOnly="True" TextSearch.TextPath="Nombre" HorizontalAlignment="Left" />
+
+                    <Separator Margin="15,5" Background="#DEE2E6"/>
+
+                    <Button x:Name="btnPausar" Content="Pausar" Click="btnPausar_Click" Width="80" Height="30" Margin="2" IsEnabled="False" Cursor="Hand"/>
+                    <Button x:Name="btnContinuar" Content="Continuar" Click="btnContinuar_Click" Width="80" Height="30" Margin="2" IsEnabled="False" Cursor="Hand"/>
+                    <Button x:Name="btnReiniciar" Content="Reiniciar" Click="btnReiniciar_Click" Width="80" Height="30" Margin="2" IsEnabled="False" Background="#FFF0F0" Foreground="#C82333" Cursor="Hand"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" HorizontalAlignment="Right">
+                    <TextBlock x:Name="lblEstadoApi" Text="Esperando selección..." 
+                               VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" 
+                               Foreground="#E67E22" Margin="0,0,20,0" TextAlignment="Right"/>
+
+                    <Border Background="White" CornerRadius="4" BorderBrush="#CED4DA" BorderThickness="1" Padding="12,6" Margin="5,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⏱" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="16"/>
+                            <TextBlock x:Name="txtTiempo" Text="Tiempo: 00:00:00" VerticalAlignment="Center" 
+                                       FontFamily="Consolas" FontWeight="Bold" FontSize="15" Foreground="#212529"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <TabControl x:Name="HardwareTypeTabs" Grid.Row="1" Margin="5" Background="White" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <ContentPresenter Content="{Binding}" Margin="10,5"/>
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="FontWeight" Value="Bold"/>
+                    <Setter Property="FontSize" Value="15"/>
+                </Style>
+            </TabControl.Resources>
+
+            <TabItem Header="💻 PROCESADOR (CPU)">
+                <TabControl x:Name="MainTabs" IsEnabled="False" BorderThickness="0" Background="White" Margin="5">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Padding" Value="15,8"/>
+                            <Setter Property="FontSize" Value="13"/>
+                            <Setter Property="FontWeight" Value="Normal"/>
+                        </Style>
+                    </TabControl.Resources>
+
+                    <TabItem Header="Resumen Real Time">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="40,20">
+                                <TextBlock Text="MONITORIZACIÓN CPU" FontSize="20" FontWeight="Bold" Foreground="#0D6EFD" Margin="0,0,0,20"/>
+                                <Border Background="#F8F9FA" Padding="20" CornerRadius="12" Margin="0,0,0,20" BorderBrush="#E9ECEF" BorderThickness="1">
+                                    <StackPanel>
+                                        <Label Content="Potencia Instantánea CPU:" Foreground="#6C757D" FontSize="14"/>
+                                        <TextBlock x:Name="txtPotencia" Text="0.00 W" FontSize="42" FontWeight="Bold" Foreground="#212529"/>
+                                    </StackPanel>
+                                </Border>
+                                <UniformGrid Columns="2" Margin="0,0,0,20">
+                                    <StackPanel Margin="0,0,10,0">
+                                        <Label Content="Consumo Total CPU:" Foreground="#6C757D" FontSize="13"/>
+                                        <TextBlock x:Name="txtAcumulado" Text="0.000000 Wh" FontSize="24" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="10,0,0,0">
+                                        <Label Content="Huella de Carbono CPU:" Foreground="#6C757D" FontSize="13"/>
+                                        <TextBlock x:Name="txtEmisiones" Text="0.000000 gCO2" FontSize="24" FontWeight="SemiBold" Foreground="#198754"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <UniformGrid Columns="2">
+                                    <Border BorderBrush="#F1F3F5" BorderThickness="0,0,1,0">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center" Foreground="#FFD700" Margin="0,0,8,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Voltaje" Foreground="#6C757D" FontSize="11"/>
+                                                <TextBlock x:Name="txtVoltaje" Text="0.0 V" FontSize="18" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="🌡" FontSize="20" VerticalAlignment="Center" Foreground="#FF4500" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Temperatura" Foreground="#6C757D" FontSize="11"/>
+                                            <TextBlock x:Name="txtTemp" Text="0.0 ºC" FontSize="18" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Historial Detallado">
+                        <Grid Margin="10">
+                            <DataGrid x:Name="dgHistorial" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#F8F9FA" FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Per." Binding="{Binding Periodo}" Width="45"/>
+                                    <DataGridTextColumn Header="Hora" Binding="{Binding Hora}" Width="85"/>
+                                    <DataGridTextColumn Header="Potencia (W)" Binding="{Binding Potencia, StringFormat={}{0:F2}}" Width="85"/>
+                                    <DataGridTextColumn Header="Cons. Per. (Wh)" Binding="{Binding ConsumoPeriodo, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Cons. Tot. (Wh)" Binding="{Binding ConsumoTotal, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="gCO2 Per." Binding="{Binding EmisionesPeriodo, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="gCO2 Tot." Binding="{Binding EmisionesTotales, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Volt. (V)" Binding="{Binding Voltaje, StringFormat={}{0:F2}}" Width="65"/>
+                                    <DataGridTextColumn Header="Temp. (ºC)" Binding="{Binding Temperatura, StringFormat={}{0:F1}}" Width="85"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Consumo por Procesos">
+                        <Grid Margin="10">
+                            <DataGrid x:Name="dgProcesos" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#F8F9FA" FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Aplicación" Binding="{Binding Nombre}" Width="2*"/>
+                                    <DataGridTextColumn Header="CPU (%)" Binding="{Binding UsoCPU, StringFormat={}{0:F2}%}" Width="*"/>
+                                    <DataGridTextColumn Header="Potencia (W)" Binding="{Binding PotenciaEstimada, StringFormat={}{0:F2} W}" Width="*"/>
+                                    <DataGridTextColumn Header="gCO2" Binding="{Binding EmisionesG, StringFormat={}{0:F6} g}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Acumulado de Procesos">
+                        <Grid Margin="10">
+                            <DataGrid x:Name="dgAcumuladoProcesos" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#F8F9FA" FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Ranking" Binding="{Binding Posicion}" Width="60"/>
+                                    <DataGridTextColumn Header="Aplicación" Binding="{Binding Nombre}" Width="2*"/>
+                                    <DataGridTextColumn Header="Total gCO2" Binding="{Binding CO2TotalG, StringFormat={}{0:F5}}" FontWeight="Bold" Foreground="#198754" Width="*"/>
+                                    <DataGridTextColumn Header="Energía (Wh)" Binding="{Binding EnergiaTotalWh, StringFormat={}{0:F4}}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </TabItem>
+
+            <TabItem Header="🎮 GRÁFICA (GPU)">
+                <TabControl x:Name="GpuTabs" IsEnabled="False" BorderThickness="0" Background="White" Margin="5">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Padding" Value="15,8"/>
+                            <Setter Property="FontSize" Value="13"/>
+                            <Setter Property="FontWeight" Value="Normal"/>
+                        </Style>
+                    </TabControl.Resources>
+
+                    <TabItem Header="Resumen Real Time">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="40,20">
+                                <TextBlock Text="MONITORIZACIÓN GPU" FontSize="20" FontWeight="Bold" Foreground="#198754" Margin="0,0,0,20"/>
+                                <Border Background="#F0F9F4" Padding="20" CornerRadius="12" Margin="0,0,0,20" BorderBrush="#D1E7DD" BorderThickness="1">
+                                    <StackPanel>
+                                        <Label Content="Potencia Instantánea GPU:" Foreground="#6C757D" FontSize="14"/>
+                                        <TextBlock x:Name="txtPotenciaGpu" Text="0.00 W" FontSize="42" FontWeight="Bold" Foreground="#212529"/>
+                                    </StackPanel>
+                                </Border>
+                                <UniformGrid Columns="2" Margin="0,0,0,20">
+                                    <StackPanel Margin="0,0,10,0">
+                                        <Label Content="Consumo Total GPU:" Foreground="#6C757D" FontSize="13"/>
+                                        <TextBlock x:Name="txtAcumuladoGpu" Text="0.000000 Wh" FontSize="24" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <StackPanel Margin="10,0,0,0">
+                                        <Label Content="Huella de Carbono GPU:" Foreground="#6C757D" FontSize="13"/>
+                                        <TextBlock x:Name="txtEmisionesGpu" Text="0.000000 gCO2" FontSize="24" FontWeight="SemiBold" Foreground="#198754"/>
+                                    </StackPanel>
+                                </UniformGrid>
+                                <UniformGrid Columns="2">
+                                    <Border BorderBrush="#F1F3F5" BorderThickness="0,0,1,0">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <TextBlock Text="⚡" FontSize="20" VerticalAlignment="Center" Foreground="#FFD700" Margin="0,0,8,0"/>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Voltaje GPU" Foreground="#6C757D" FontSize="11"/>
+                                                <TextBlock x:Name="txtVoltajeGpu" Text="0.0 V" FontSize="18" FontWeight="Bold"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <TextBlock Text="🌡" FontSize="20" VerticalAlignment="Center" Foreground="#FF4500" Margin="0,0,8,0"/>
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="Temperatura GPU" Foreground="#6C757D" FontSize="11"/>
+                                            <TextBlock x:Name="txtTempGpu" Text="0.0 ºC" FontSize="18" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </UniformGrid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </TabItem>
+
+                    <TabItem Header="Historial Detallado">
+                        <Grid Margin="10">
+                            <DataGrid x:Name="dgHistorialGpu" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#F8F9FA" FontSize="12">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Per." Binding="{Binding Periodo}" Width="45"/>
+                                    <DataGridTextColumn Header="Hora" Binding="{Binding Hora}" Width="85"/>
+                                    <DataGridTextColumn Header="Potencia (W)" Binding="{Binding Potencia, StringFormat={}{0:F2}}" Width="85"/>
+                                    <DataGridTextColumn Header="Cons. Per. (Wh)" Binding="{Binding ConsumoPeriodo, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Cons. Tot. (Wh)" Binding="{Binding ConsumoTotal, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="gCO2 Per." Binding="{Binding EmisionesPeriodo, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="gCO2 Tot." Binding="{Binding EmisionesTotales, StringFormat={}{0:F6}}" Width="1.1*"/>
+                                    <DataGridTextColumn Header="Volt. (V)" Binding="{Binding Voltaje, StringFormat={}{0:F2}}" Width="65"/>
+                                    <DataGridTextColumn Header="Temp. (ºC)" Binding="{Binding Temperatura, StringFormat={}{0:F1}}" Width="85"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </TabItem>
+
+            <TabItem Header="📊 TOTAL (CPU + GPU)">
+                <TabControl x:Name="TotalTabs" IsEnabled="False" BorderThickness="0" Background="White" Margin="5">
+                    <TabControl.Resources>
+                        <Style TargetType="TabItem">
+                            <Setter Property="Padding" Value="15,8"/>
+                            <Setter Property="FontSize" Value="13"/>
+                            <Setter Property="FontWeight" Value="Normal"/>
+                        </Style>
+                    </TabControl.Resources>
+
+                    <TabItem Header="Resumen Real Time">
+                        <StackPanel Margin="40,30">
+                            <TextBlock Text="CONSUMO GLOBAL DEL SISTEMA" FontSize="22" FontWeight="ExtraBold" Foreground="#4B0082" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+                            
+                            <Border Background="#F3F0F8" Padding="30" CornerRadius="15" Margin="0,0,0,30" BorderBrush="#E0D4EB" BorderThickness="2">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Label Content="Potencia Combinada (W):" Foreground="#6C757D" FontSize="16" HorizontalAlignment="Center"/>
+                                    <TextBlock x:Name="txtPotenciaTotal" Text="0.00 W" FontSize="56" FontWeight="Black" Foreground="#212529" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <UniformGrid Columns="2" Margin="20,0">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Label Content="Energía Total (Wh):" Foreground="#6C757D" FontSize="15"/>
+                                    <TextBlock x:Name="txtAcumuladoTotal" Text="0.000000 Wh" FontSize="32" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel HorizontalAlignment="Center">
+                                    <Label Content="Huella de Carbono Total:" Foreground="#6C757D" FontSize="15"/>
+                                    <TextBlock x:Name="txtEmisionesTotal" Text="0.000000 gCO2" FontSize="32" FontWeight="Bold" Foreground="#DC3545"/>
+                                </StackPanel>
+                            </UniformGrid>
+                        </StackPanel>
+                    </TabItem>
+
+                    <TabItem Header="Historial Detallado">
+                        <Grid Margin="10">
+                            <DataGrid x:Name="dgHistorialTotal" AutoGenerateColumns="False" IsReadOnly="True" AlternatingRowBackground="#F8F9FA" FontSize="13">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Per." Binding="{Binding Periodo}" Width="50"/>
+                                    <DataGridTextColumn Header="Hora" Binding="{Binding Hora}" Width="100"/>
+                                    <DataGridTextColumn Header="Potencia Total (W)" Binding="{Binding Potencia, StringFormat={}{0:F2}}" Width="*"/>
+                                    <DataGridTextColumn Header="Consumo Per. (Wh)" Binding="{Binding ConsumoPeriodo, StringFormat={}{0:F6}}" Width="*"/>
+                                    <DataGridTextColumn Header="Consumo Total (Wh)" Binding="{Binding ConsumoTotal, StringFormat={}{0:F6}}" Width="*"/>
+                                    <DataGridTextColumn Header="gCO2 Per." Binding="{Binding EmisionesPeriodo, StringFormat={}{0:F6}}" Width="*"/>
+                                    <DataGridTextColumn Header="gCO2 Tot." Binding="{Binding EmisionesTotales, StringFormat={}{0:F6}}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
