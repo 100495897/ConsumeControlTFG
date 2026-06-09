@@ -32,6 +32,8 @@ namespace ConsumeControlTFG
         private TimeSpan _tiempoAcumulado = TimeSpan.Zero;
         private int _segundosParaMedicion = 0;
         private int _ultimoPeriodo = 0;
+        private double _emisionesAcumuladasCpuG = 0;
+        private double _emisionesAcumuladasGpuG = 0;
 
         //Diccionarios para cálculos de CPU y Acumulados
         private DateTime _ultimoChequeoProcesos = DateTime.Now;
@@ -158,8 +160,8 @@ namespace ConsumeControlTFG
                 double totalEnergiaGpuWh = _monitorService.EnergiaGpuWh;
                 double totalEnergiaWh = totalEnergiaCpuWh + totalEnergiaGpuWh;
 
-                double emisionesCpuG = (totalEnergiaCpuWh / 1000.0) * _intensidadCarbonoActual;
-                double emisionesGpuG = (totalEnergiaGpuWh / 1000.0) * _intensidadCarbonoActual;
+                double emisionesCpuG = _emisionesAcumuladasCpuG;
+                double emisionesGpuG = _emisionesAcumuladasGpuG;
                 double emisionesTotalesG = emisionesCpuG + emisionesGpuG;
 
                 csv.AppendLine($"Energia Total CPU (Wh):;{totalEnergiaCpuWh:F6}");
@@ -327,27 +329,27 @@ namespace ConsumeControlTFG
 
             double consumoEstePeriodoWh = (_monitorService.PotenciaW * 5.0) / 3600.0;
             double emisionesEstePeriodoG = (consumoEstePeriodoWh / 1000.0) * _intensidadCarbonoActual;
-            double emisionesTotalesG = (_monitorService.EnergiaWh / 1000.0) * _intensidadCarbonoActual;
+            _emisionesAcumuladasCpuG += emisionesEstePeriodoG;
 
             _monitorService.Historial.Add(new Models.RegistroMedicion(
                 _ultimoPeriodo, _monitorService.PotenciaW, consumoEstePeriodoWh,
-                _monitorService.EnergiaWh, emisionesEstePeriodoG, emisionesTotalesG,
+                _monitorService.EnergiaWh, emisionesEstePeriodoG, _emisionesAcumuladasCpuG,
                 _monitorService.Voltaje, _monitorService.Temperatura, _intensidadCarbonoActual
             ));
 
             double consumoEstePeriodoGpuWh = (_monitorService.PotenciaGpuW * 5.0) / 3600.0;
             double emisionesEstePeriodoGpuG = (consumoEstePeriodoGpuWh / 1000.0) * _intensidadCarbonoActual;
-            double emisionesTotalesGpuG = (_monitorService.EnergiaGpuWh / 1000.0) * _intensidadCarbonoActual;
+            _emisionesAcumuladasGpuG += emisionesEstePeriodoGpuG;
 
             _monitorService.HistorialGpu.Add(new Models.RegistroMedicion(
                 _ultimoPeriodo, _monitorService.PotenciaGpuW, consumoEstePeriodoGpuWh,
-                _monitorService.EnergiaGpuWh, emisionesEstePeriodoGpuG, emisionesTotalesGpuG,
+                _monitorService.EnergiaGpuWh, emisionesEstePeriodoGpuG, _emisionesAcumuladasGpuG,
                 _monitorService.VoltajeGpu, _monitorService.TemperaturaGpu, _intensidadCarbonoActual
             ));
 
             double consumoEstePeriodoTotalWh = consumoEstePeriodoWh + consumoEstePeriodoGpuWh;
             double emisionesEstePeriodoTotalG = emisionesEstePeriodoG + emisionesEstePeriodoGpuG;
-            double emisionesTotalesGlobalG = emisionesTotalesG + emisionesTotalesGpuG;
+            double emisionesTotalesGlobalG = _emisionesAcumuladasCpuG + _emisionesAcumuladasGpuG;
 
             _monitorService.HistorialTotal.Add(new Models.RegistroMedicion(
                 _ultimoPeriodo,
@@ -359,7 +361,7 @@ namespace ConsumeControlTFG
             ));
 
             // Actualizamos llamando con los 3 valores
-            ActualizarUIPantalla(emisionesTotalesG, emisionesTotalesGpuG, emisionesTotalesGlobalG);
+            ActualizarUIPantalla(_emisionesAcumuladasCpuG, _emisionesAcumuladasGpuG, emisionesTotalesGlobalG);
         }
 
         private void ActualizarUIPantalla(double emisionesTotalesCpu, double emisionesTotalesGpu, double emisionesTotalesGlobal)
@@ -424,6 +426,7 @@ namespace ConsumeControlTFG
             var lista = new List<Models.ProcesoConsumo>();
             DateTime ahora = DateTime.Now;
             double tiempoTranscurridoSec = (ahora - _ultimoChequeoProcesos).TotalSeconds;
+            if (tiempoTranscurridoSec <= 0) tiempoTranscurridoSec = 0.1;
             int numNucleos = Environment.ProcessorCount;
 
             foreach (var p in Process.GetProcesses())
@@ -437,20 +440,16 @@ namespace ConsumeControlTFG
                     if (_tiemposProcesosAnteriores.TryGetValue(p.Id, out TimeSpan tiempoAnterior))
                     {
                         double tiempoUsadoSec = (tiempoCpuActual - tiempoAnterior).TotalSeconds;
+                        if (tiempoUsadoSec < 0) tiempoUsadoSec = 0;
                         double usoCPU = (tiempoUsadoSec / (tiempoTranscurridoSec * numNucleos)) * 100;
 
                         if (usoCPU > 0.1)
                         {
-                            double potenciaProc = (potenciaTotalW * (usoCPU / 100));
-                            double consumoWh = (potenciaProc * 5.0) / 3600.0;
-
                             lista.Add(new Models.ProcesoConsumo
                             {
                                 Nombre = p.ProcessName,
                                 Id = p.Id,
-                                UsoCPU = usoCPU,
-                                PotenciaEstimada = potenciaProc,
-                                EmisionesG = (consumoWh / 1000.0) * intensidadCO2
+                                UsoCPU = usoCPU
                             });
                         }
                     }
@@ -460,6 +459,24 @@ namespace ConsumeControlTFG
             }
 
             _ultimoChequeoProcesos = ahora;
+
+            double sumaUso = lista.Sum(x => x.UsoCPU);
+            if (sumaUso > 100.0)
+            {
+                double factorNormalizacion = 100.0 / sumaUso;
+                foreach (var item in lista)
+                {
+                    item.UsoCPU *= factorNormalizacion;
+                }
+            }
+
+            foreach (var item in lista)
+            {
+                item.PotenciaEstimada = (potenciaTotalW * (item.UsoCPU / 100.0));
+                double consumoWh = (item.PotenciaEstimada * 5.0) / 3600.0;
+                item.EmisionesG = (consumoWh / 1000.0) * intensidadCO2;
+            }
+
             return lista.OrderByDescending(x => x.UsoCPU).Take(20).ToList();
         }
 
@@ -557,6 +574,8 @@ namespace ConsumeControlTFG
             _ultimoDatoEsReal = false;
             _segundosParaMedicion = 0;
             _ultimoPeriodo = 0;
+            _emisionesAcumuladasCpuG = 0;
+            _emisionesAcumuladasGpuG = 0;
             _historicoProcesos.Clear();
             _tiemposProcesosAnteriores.Clear();
 

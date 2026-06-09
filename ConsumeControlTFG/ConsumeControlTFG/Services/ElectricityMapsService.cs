@@ -16,7 +16,7 @@ namespace ConsumeControlTFG.Services
             //Gestiona la llamada a la API externa para obtener el gCO2/kWh actual de la zona seleccionada
             if (string.IsNullOrWhiteSpace(ApiKey) || ApiKey == "TU_CLAVE_API")
             {
-                return new ResultadoEmisiones { Valor = 250.0, EsReal = false };
+                return new ResultadoEmisiones { Valor = 434.0, EsReal = false };
             }
 
             try
@@ -34,7 +34,7 @@ namespace ConsumeControlTFG.Services
             }
             catch { /* Error de red o API Key inválida */ }
 
-            return new ResultadoEmisiones { Valor = 250.0, EsReal = false };
+            return new ResultadoEmisiones { Valor = 434.0, EsReal = false };
         }
     }
 
